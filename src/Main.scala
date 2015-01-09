@@ -1,4 +1,6 @@
+import data.XY
 import function.{ReactFunction, GoodbyeFunction, WelcomeFunction}
+import parser.InputParser
 
 class ControlFunctionFactory {
   def create = new ControlFunction().respond _
@@ -8,9 +10,7 @@ class ControlFunction {
 
   def respond(input: String):String = {
 
-    val inputFunction: AnyRef = new InputParser(input).prepareResultObject
-
-    val command = inputFunction match {
+    val command = new InputParser(input).prepareResultObject match {
       case input: ReactFunction => react(input)
       case input: WelcomeFunction => welcome(input)
       case input: GoodbyeFunction => goodbye(input)
@@ -19,7 +19,6 @@ class ControlFunction {
     println(command)
 
     command
-
   }
 
 
@@ -27,8 +26,12 @@ class ControlFunction {
 
     val userName = "Marcin"
 
+
     "Move(direction="+randomMove+":"+randomMove+")"
   }
+
+
+
 
 
   def randomMove: Int = {
