@@ -402,6 +402,8 @@ class ControlFunctionFactory {
 
 class ControlFunction {
 
+  var apocalypseAt: Int = 0;
+
   def respond(input: String):String = {
 
     try {
@@ -430,13 +432,13 @@ class ControlFunction {
 
     instinct ::= NamedDirection(analyser.goodPlants.foldLeft(Direction.ZERO)((acc, entity) => {
       val pathCost = entity.distance * 1.0
-      val nutritions = 1
+      val nutritions = 1.5
       acc + entity.toDirection.normalize * nutritions / pathCost
     }), "plantHunger")
 
     instinct ::= NamedDirection(analyser.goodBeasts.foldLeft(Direction.ZERO)((acc, entity) => {
       val pathCost = entity.distance * 1.5
-      val nutritions = 2
+      val nutritions = 3
       acc + entity.toDirection.normalize * nutritions / pathCost
     }), "beastHunger")
 
@@ -454,7 +456,7 @@ class ControlFunction {
 
     instinct ::= NamedDirection(analyser.badBeasts.foldLeft(Direction.ZERO)((acc, entity) => {
       val pathCost = entity.distance * 1.5
-      val nutritions = 0.7
+      val nutritions = 0.3
       acc + entity.toDirection.normalize * nutritions / pathCost
     }), "beastFear")
 
@@ -470,7 +472,7 @@ class ControlFunction {
 
     instinct ::= NamedDirection(analyser.enemyBots.foldLeft(Direction.ZERO)((acc, entity) => {
       val pathCost = entity.distance * 1.2
-      val nutritions = 3
+      val nutritions = 8
       acc + entity.toDirection.normalize * nutritions / pathCost
     }), "Predator")
 
@@ -489,6 +491,10 @@ class ControlFunction {
       val masterDistance = master.distance
       instinct ::= NamedDirection(master / 5 * math.pow(input.energy.toDouble / 200.0, 1.5) / masterDistance * (if(masterDistance < 50) 1.0 else 2.0), "GoHome")
 
+    }
+
+    if(input.time > apocalypseAt - 100) {
+      instinct ::= NamedDirection(input.masterOption.get.toDirection.normalize * 100, "AbandonShip")
     }
 
     // else {
@@ -510,9 +516,9 @@ class ControlFunction {
 
     val enemies = analyser.badBeasts ::: analyser.enemyMiniBots ::: analyser.enemyBots
       if(enemies.count(_.distance < 3) > 1) {
-        commands ::= Explode(2)
+        commands ::= Explode(3)
       } else if (enemies.count(_.distance < 2) > 0) {
-        commands ::= Explode(1)
+        commands ::= Explode(2)
       }
 //      else if(analyser.badPlants.size > 0 && analyser.badPlants.map(_.distance).min < 2) {
 //      commands ::= Explode(2)
@@ -559,6 +565,10 @@ class ControlFunction {
       acc - entity.toDirection.normalize / entity.distance * 2
     })
 
+    instinct ::= analyser.enemyMiniBots.foldLeft(Direction.ZERO)((acc, entity) => {
+      acc - entity.toDirection.normalize / entity.distance * 4
+    })
+
     instinct ::= analyser.myMiniBots.filterNot(_.distance == 0).foldLeft(Direction.ZERO)((acc, entity) => {
       acc - entity.toDirection.normalize * entity.distance / 10
     })
@@ -603,6 +613,7 @@ class ControlFunction {
   }
 
   def welcome(input: WelcomeFunction): String = {
+    apocalypseAt = input.apocalypse
     "Status(text=Preparing)"
   }
 
